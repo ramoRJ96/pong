@@ -6,18 +6,18 @@ const context = canvas.getContext("2d");
 /*********** Create the user and computer paddle ************/
 
 const user = {
-  x: 0,
+  x: 10,
   y: canvas.height / 2 - 100 / 2,
-  width: 10,
+  width: 20,
   height: 100,
   color: "WHITE",
   score: 0,
 };
 
 const com = {
-  x: canvas.width - 10,
+  x: canvas.width - 30,
   y: canvas.height / 2 - 100 / 2,
-  width: 10,
+  width: 20,
   height: 100,
   color: "WHITE",
   score: 0,
@@ -190,4 +190,5 @@ const game = () => {
 
 //Loop
 const framePerSecond = 50;
+// game()
 setInterval(game, 1000 / framePerSecond);
