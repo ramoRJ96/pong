@@ -1,76 +1,46 @@
-/********** Select canvas **********/
-
 const canvas = document.getElementById("pong");
 const context = canvas.getContext("2d");
 
-/*********** Create the user and computer paddle ************/
-
 const user = {
   x: 10,
-  y: canvas.height / 2 - 100 / 2,
+  y: canvas.height / 2 - 120 / 2,
   width: 20,
-  height: 100,
+  height: 120,
   color: "WHITE",
   score: 0,
 };
 
-const com = {
+const computer = {
   x: canvas.width - 30,
-  y: canvas.height / 2 - 100 / 2,
+  y: canvas.height / 2 - 120 / 2,
   width: 20,
-  height: 100,
+  height: 120,
   color: "WHITE",
   score: 0,
 };
-
-/*********** The ball ***********/
 
 const ball = {
   x: canvas.width / 2,
   y: canvas.height / 2,
-  radius: 10,
+  radius: 15,
+  color: "WHITE",
   speed: 5,
   velocityX: 5,
   velocityY: 5,
-  color: "WHITE",
 };
 
-/********** the net **********/
-
-const net = {
-  x: canvas.width / 2 - 1,
-  y: 0,
-  width: 2,
-  height: 10,
-  color: "WHITE",
-};
-
-/*********** Draw rectangle ************/
-
-const drawRectangle = (x, y, w, h, color) => {
+const drawRectangle = (x, y, width, height, color) => {
   context.fillStyle = color;
-  context.fillRect(x, y, w, h);
+  context.fillRect(x, y, width, height);
 };
 
-/********** Draw the net **********/
-
-const drawNet = () => {
-  for (let i = 0; i <= canvas.height; i += 15) {
-    drawRectangle(net.x, net.y + i, net.width, net.height, net.color);
-  }
-};
-
-/*********** Draw circle ************/
-
-const drawCircle = (x, y, r, color) => {
+const drawCircle = (x, y, radius, color) => {
   context.fillStyle = color;
   context.beginPath();
-  context.arc(x, y, r, 0, Math.PI * 2, false);
+  context.arc(x, y, radius, 0, Math.PI * 2);
   context.closePath();
   context.fill();
 };
-
-/*********** Draw text ************/
 
 const drawText = (text, x, y, color) => {
   context.fillStyle = color;
@@ -78,35 +48,25 @@ const drawText = (text, x, y, color) => {
   context.fillText(text, x, y);
 };
 
-/************** Render the game **************/
-function render() {
-  // Clear the canvas
-  drawRectangle(0, 0, canvas.width, canvas.height, "BLACK");
+const render = () => {
+  drawRectangle(0, 0, canvas.width, canvas.height, "#22347a");
+  drawRectangle(canvas.width / 2 - 2.5, 0, 5, canvas.height, "WHITE");
 
-  //draw the net
-  drawNet();
+  drawRectangle(user.x, user.y, user.width, user.height, "WHITE");
+  drawRectangle(
+    computer.x,
+    computer.y,
+    computer.width,
+    computer.height,
+    "WHITE"
+  );
 
-  //Draw score
   drawText(user.score, canvas.width / 4, canvas.height / 5, "WHITE");
-  drawText(com.score, (3 * canvas.width) / 4, canvas.height / 5, "WHITE");
+  drawText(computer.score, (3 * canvas.width) / 4, canvas.height / 5, "WHITE");
 
-  //Draw the user and com paddle
-  drawRectangle(user.x, user.y, user.width, user.height, user.color);
-  drawRectangle(com.x, com.y, com.width, com.height, com.color);
-
-  //Draw the ball
-  drawCircle(ball.x, ball.y, ball.radius, ball.color);
-}
-
-/*************** Control the paddle ***************/
-const movePaddle = (event) => {
-  let rect = canvas.getBoundingClientRect();
-  user.y = event.clientY - rect.top - user.width / 2;
+  drawCircle(ball.x, ball.y, ball.radius, "WHITE");
 };
 
-canvas.addEventListener("mousemove", movePaddle);
-
-/************** collision detection ***************/
 const collision = (ball, player) => {
   ball.top = ball.y - ball.radius;
   ball.bottom = ball.y + ball.radius;
@@ -119,76 +79,67 @@ const collision = (ball, player) => {
   player.right = player.x + player.width;
 
   return (
-    ball.right > player.left &&
+    ball.top < player.bottom &&
     ball.bottom > player.top &&
     ball.left < player.right &&
-    ball.top < player.bottom
+    ball.right > player.left
   );
 };
 
-/*********** Reset the ball ************/
+const movePaddle = (event) => {
+  let rect = canvas.getBoundingClientRect();
+
+  user.y = event.clientY - rect.top - user.height / 2;
+};
+
+canvas.addEventListener("mousemove", movePaddle);
+
 const resetBall = () => {
   ball.x = canvas.width / 2;
   ball.y = canvas.height / 2;
 
   ball.speed = 5;
-  ball.velocityX = -ball.velocityX;
+  ball.velocityX = 5;
 };
 
-/********** update: pos, move, score ***********/
 const update = () => {
   ball.x += ball.velocityX;
   ball.y += ball.velocityY;
 
-  //Simple AI to control the computer paddle
-  let computerLevel = 0.1;
-  com.y += (ball.y - (com.y + com.height / 2)) * computerLevel;
-
-  if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+  if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
     ball.velocityY = -ball.velocityY;
   }
 
-  let player = ball.x < canvas.width / 2 ? user : com;
+  let player = ball.x < canvas.width / 2 ? user : computer;
+
+  let computerLevel = 0.1;
+  computer.y += (ball.y - (computer.y + computer.height / 2)) * computerLevel;
 
   if (collision(ball, player)) {
-    //where the player hit the ball
-    let collidePoint = ball.y - (player.y + player.height / 2);
+    let collidePoint =
+      (ball.y - (player.y + player.height / 2)) / (player.height / 2);
 
-    //Normalization
-    collidePoint = collidePoint / (player.height / 2);
+    let angle = (collidePoint * Math.PI) / 4;
 
-    //Calculate the angle in radian
-    let angleRad = collidePoint + Math.PI / 4;
-
-    //X direction of the ball when it's hit
     let direction = ball.x < canvas.width / 2 ? 1 : -1;
 
-    //Change the velocity X and Y
-    ball.velocityX = direction * ball.speed * Math.cos(angleRad);
-    ball.velocityY = ball.speed * Math.sin(angleRad);
-
-    ball.speed += 0.5;
+    ball.velocityX = direction * ball.speed * Math.cos(angle);
+    ball.velocityY = ball.speed * Math.sin(angle);
   }
 
-  //update the score
-  if (ball.x - ball.radius < 0) {
-    //the computer win
-    com.score++;
+  if (ball.x + ball.radius < 0) {
+    computer.score++;
     resetBall();
-  } else if (ball.x + ball.radius > canvas.width) {
-    //the user win
+  } else if (ball.x - ball.radius > canvas.width) {
     user.score++;
     resetBall();
   }
 };
 
-/*********** game init ***********/
 const game = () => {
-  update();
   render();
+  update();
 };
 
-//Loop
-const framePerSecond = 50;
-// game()
+const framePerSecond = 60;
 setInterval(game, 1000 / framePerSecond);
